@@ -1,0 +1,6 @@
+# VS Code workspace settings (this workspace's launch.json holds real DB/JWT secrets)
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
