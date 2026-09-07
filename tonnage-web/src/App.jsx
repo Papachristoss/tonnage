@@ -35,8 +35,6 @@ function App() {
   });
 
   useEffect(() => {
-    loadExercises();
-
     // Listen for 401 unauthenticated signals from api.js interceptor
     const handleAuthChange = () => {
       setCurrentUser(null);
@@ -47,6 +45,12 @@ function App() {
       window.removeEventListener('tonnage_auth_changed', handleAuthChange);
     };
   }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      loadExercises();
+    }
+  }, [currentUser]);
 
   const loadExercises = async () => {
     try {
