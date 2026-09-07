@@ -3,6 +3,7 @@ import { exerciseService } from './services/api';
 import WorkoutModal from './components/WorkoutModal';
 import AuthModal from './components/AuthModal';
 import ProgressChart from './components/ProgressChart';
+import LandingPage from './components/LandingPage';
 import { 
   Dumbbell, 
   TrendingUp, 
@@ -107,6 +108,9 @@ function App() {
   };
 
   return (
+  !currentUser ? (
+    <LandingPage onAuthSuccess={handleAuthSuccess} />
+  ) : (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-10 px-6 py-4">
@@ -339,13 +343,8 @@ function App() {
         onWorkoutSaved={handleWorkoutSaved}
       />
 
-      {/* Auth Modal (Login / Register) */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        onAuthSuccess={handleAuthSuccess}
-      />
-    </div>
+        </div>
+  )
   );
 }
 

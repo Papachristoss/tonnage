@@ -11,7 +11,4 @@ import java.util.List;
 public interface WorkoutSetRepository extends JpaRepository<WorkoutSet, Long> {
 
     List<WorkoutSet> findByExerciseIdAndWorkoutSessionUserOrderByWorkoutSessionStartedAtAsc(Long exerciseId, User user);
-
-    // Fallback if user is null or not authenticated
-    List<WorkoutSet> findByExerciseIdOrderByWorkoutSessionStartedAtAsc(Long exerciseId);
 }

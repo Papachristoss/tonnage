@@ -1,11 +1,18 @@
 package com.tonnage.api.config;
 
 import com.tonnage.api.model.Exercise;
+import com.tonnage.api.model.User;
+import com.tonnage.api.model.WorkoutSession;
+import com.tonnage.api.model.WorkoutSet;
 import com.tonnage.api.repository.ExerciseRepository;
+import com.tonnage.api.repository.UserRepository;
+import com.tonnage.api.repository.WorkoutSessionRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Configuration
@@ -32,6 +39,62 @@ public class DataInitializer {
                 exerciseRepository.saveAll(defaultExercises);
                 System.out.println(">>> Seeded " + defaultExercises.size() + " default exercises into Neon PostgreSQL!");
             }
+        };
+    }
+
+    @Bean
+    public CommandLineRunner initDemoUser(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            ExerciseRepository exerciseRepository,
+            WorkoutSessionRepository sessionRepository
+    ) {
+        return args -> {
+            String demoEmail = "demo@tonnage.app";
+
+            if (userRepository.existsByEmail(demoEmail)) {
+                return; // already seeded, don't duplicate on every restart
+            }
+
+            User demoUser = new User(demoEmail, passwordEncoder.encode("demo1234"));
+            userRepository.save(demoUser);
+
+            Exercise bench = exerciseRepository.findByNameIgnoreCase("Barbell Bench Press").orElse(null);
+            Exercise squat = exerciseRepository.findByNameIgnoreCase("Barbell Back Squat").orElse(null);
+
+            if (bench != null) {
+                WorkoutSession session1 = WorkoutSession.builder()
+                        .title("Push Day A")
+                        .startedAt(LocalDateTime.now().minusDays(14))
+                        .completedAt(LocalDateTime.now().minusDays(14))
+                        .user(demoUser)
+                        .build();
+                session1.addSet(WorkoutSet.builder().exercise(bench).setNumber(1).weightKg(60.0).reps(8).rpe(7.0).build());
+                session1.addSet(WorkoutSet.builder().exercise(bench).setNumber(2).weightKg(62.5).reps(6).rpe(8.0).build());
+                sessionRepository.save(session1);
+
+                WorkoutSession session2 = WorkoutSession.builder()
+                        .title("Push Day B")
+                        .startedAt(LocalDateTime.now().minusDays(7))
+                        .completedAt(LocalDateTime.now().minusDays(7))
+                        .user(demoUser)
+                        .build();
+                session2.addSet(WorkoutSet.builder().exercise(bench).setNumber(1).weightKg(65.0).reps(6).rpe(8.5).build());
+                sessionRepository.save(session2);
+            }
+
+            if (squat != null) {
+                WorkoutSession session3 = WorkoutSession.builder()
+                        .title("Leg Day")
+                        .startedAt(LocalDateTime.now().minusDays(3))
+                        .completedAt(LocalDateTime.now().minusDays(3))
+                        .user(demoUser)
+                        .build();
+                session3.addSet(WorkoutSet.builder().exercise(squat).setNumber(1).weightKg(100.0).reps(5).rpe(9.0).build());
+                sessionRepository.save(session3);
+            }
+
+            System.out.println(">>> Seeded demo user (" + demoEmail + ") with sample workout history!");
         };
     }
 }

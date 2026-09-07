@@ -75,9 +75,7 @@ public class AnalyticsService {
     }
 
     public ExerciseProgressDto getExerciseProgress(Long exerciseId, String exerciseName, User user) {
-        List<WorkoutSet> sets = (user != null)
-                ? workoutSetRepository.findByExerciseIdAndWorkoutSessionUserOrderByWorkoutSessionStartedAtAsc(exerciseId, user)
-                : workoutSetRepository.findByExerciseIdOrderByWorkoutSessionStartedAtAsc(exerciseId);
+        List<WorkoutSet> sets = workoutSetRepository.findByExerciseIdAndWorkoutSessionUserOrderByWorkoutSessionStartedAtAsc(exerciseId, user);
 
         if (sets.isEmpty()) {
             return ExerciseProgressDto.builder()
