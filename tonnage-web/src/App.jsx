@@ -118,8 +118,8 @@ function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-10 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
               <Dumbbell className="w-5 h-5" />
             </div>
@@ -172,7 +172,7 @@ function App() {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-6xl mx-auto p-6">
+      <main className="max-w-6xl mx-auto p-4 sm:p-6">
         {error && (
           <div className="p-4 mb-6 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm">
             {error}
@@ -181,7 +181,7 @@ function App() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Exercises List */}
-          <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex flex-col h-[750px]">
+          <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex flex-col h-[400px] lg:h-[750px]">
             <div className="flex items-center justify-between mb-4 px-2">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
                 Master Exercises ({exercises.length})

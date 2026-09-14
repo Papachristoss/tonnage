@@ -74,7 +74,7 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
       <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-800">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center">
               <Dumbbell className="w-4 h-4" />
@@ -91,7 +91,7 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
 
         {/* Modal Body / Form */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="p-6 space-y-5 overflow-y-auto flex-1">
+          <div className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1">
             {formError && (
               <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm rounded-xl">
                 {formError}
@@ -132,27 +132,40 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
                 {sets.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-2 bg-slate-950/70 border border-slate-800 p-3 rounded-xl"
+                    className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl space-y-2"
                   >
-                    <span className="text-xs font-bold text-slate-500 w-5 text-center">
-                      #{idx + 1}
-                    </span>
+                    {/* Row 1: number + exercise select + delete (always fits, one control wide) */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-500 w-5 text-center shrink-0">
+                        #{idx + 1}
+                      </span>
 
-                    {/* Exercise Select */}
-                    <select
-                      value={item.exerciseId}
-                      onChange={(e) => handleSetChange(idx, 'exerciseId', e.target.value)}
-                      className="flex-1 min-w-[140px] px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
-                    >
-                      {exercises.map((ex) => (
-                        <option key={ex.id} value={ex.id}>
-                          {ex.name}
-                        </option>
-                      ))}
-                    </select>
+                      <select
+                        value={item.exerciseId}
+                        onChange={(e) => handleSetChange(idx, 'exerciseId', e.target.value)}
+                        className="flex-1 min-w-0 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                      >
+                        {exercises.map((ex) => (
+                          <option key={ex.id} value={ex.id}>
+                            {ex.name}
+                          </option>
+                        ))}
+                      </select>
 
-                    {/* Weight Input */}
-                    <div className="w-20">
+                      <button
+                        type="button"
+                        disabled={sets.length === 1}
+                        onClick={() => handleRemoveSet(idx)}
+                        className={`p-1.5 rounded-lg text-slate-500 hover:text-rose-400 transition shrink-0 ${
+                          sets.length === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-800'
+                        }`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Row 2: weight / reps / RPE - three equal columns, fits any screen width */}
+                    <div className="grid grid-cols-3 gap-2 pl-7">
                       <input
                         type="number"
                         step="0.5"
@@ -163,10 +176,7 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
                         required
                         className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white text-center focus:outline-none focus:border-blue-500"
                       />
-                    </div>
 
-                    {/* Reps Input */}
-                    <div className="w-16">
                       <input
                         type="number"
                         min="1"
@@ -176,10 +186,7 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
                         required
                         className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white text-center focus:outline-none focus:border-blue-500"
                       />
-                    </div>
 
-                    {/* RPE Input */}
-                    <div className="w-16">
                       <input
                         type="number"
                         step="0.5"
@@ -191,18 +198,6 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
                         className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-amber-300 text-center focus:outline-none focus:border-amber-500"
                       />
                     </div>
-
-                    {/* Delete Set */}
-                    <button
-                      type="button"
-                      disabled={sets.length === 1}
-                      onClick={() => handleRemoveSet(idx)}
-                      className={`p-1.5 rounded-lg text-slate-500 hover:text-rose-400 transition ${
-                        sets.length === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-800'
-                      }`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 ))}
               </div>
@@ -210,7 +205,7 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
           </div>
 
           {/* Modal Footer */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-800 bg-slate-900/50">
+          <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-4 border-t border-slate-800 bg-slate-900/50">
             <button
               type="button"
               onClick={onClose}
