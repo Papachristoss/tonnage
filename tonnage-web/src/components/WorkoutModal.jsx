@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { workoutService } from '../services/api';
 import { X, Plus, Trash2, Dumbbell, Loader2, Save } from 'lucide-react';
 
-export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSaved }) {
+export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSaved, presetExerciseId }) {
   const [title, setTitle] = useState('Push Day');
   const [sets, setSets] = useState([
     { exerciseId: exercises[0]?.id || 1, weightKg: 80, reps: 8, rpe: 8.0 }
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+
+  // The modal stays mounted between opens, so reset its state fresh every
+  // time it's opened - this is what lets "Log this exercise" pre-fill the
+  // correct exercise instead of showing whatever was left over last time.
+  useEffect(() => {
+    if (isOpen) {
+      setSets([
+        { exerciseId: presetExerciseId || exercises[0]?.id || 1, weightKg: 80, reps: 8, rpe: 8.0 }
+      ]);
+      setFormError(null);
+    }
+  }, [isOpen, presetExerciseId]);
 
   if (!isOpen) return null;
 
@@ -135,68 +147,88 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
                     className="bg-slate-950/70 border border-slate-800 p-3 rounded-xl space-y-2"
                   >
                     {/* Row 1: number + exercise select + delete (always fits, one control wide) */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-500 w-5 text-center shrink-0">
-                        #{idx + 1}
-                      </span>
+                    <div>
+                      <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1 pl-7">
+                        Exercise
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-500 w-5 text-center shrink-0">
+                          #{idx + 1}
+                        </span>
 
-                      <select
-                        value={item.exerciseId}
-                        onChange={(e) => handleSetChange(idx, 'exerciseId', e.target.value)}
-                        className="flex-1 min-w-0 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
-                      >
-                        {exercises.map((ex) => (
-                          <option key={ex.id} value={ex.id}>
-                            {ex.name}
-                          </option>
-                        ))}
-                      </select>
+                        <select
+                          value={item.exerciseId}
+                          onChange={(e) => handleSetChange(idx, 'exerciseId', e.target.value)}
+                          className="flex-1 min-w-0 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500"
+                        >
+                          {exercises.map((ex) => (
+                            <option key={ex.id} value={ex.id}>
+                              {ex.name}
+                            </option>
+                          ))}
+                        </select>
 
-                      <button
-                        type="button"
-                        disabled={sets.length === 1}
-                        onClick={() => handleRemoveSet(idx)}
-                        className={`p-1.5 rounded-lg text-slate-500 hover:text-rose-400 transition shrink-0 ${
-                          sets.length === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-800'
-                        }`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        <button
+                          type="button"
+                          disabled={sets.length === 1}
+                          onClick={() => handleRemoveSet(idx)}
+                          className={`p-1.5 rounded-lg text-slate-500 hover:text-rose-400 transition shrink-0 ${
+                            sets.length === 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-800'
+                          }`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Row 2: weight / reps / RPE - three equal columns, fits any screen width */}
                     <div className="grid grid-cols-3 gap-2 pl-7">
-                      <input
-                        type="number"
-                        step="0.5"
-                        min="0"
-                        placeholder="kg"
-                        value={item.weightKg}
-                        onChange={(e) => handleSetChange(idx, 'weightKg', e.target.value)}
-                        required
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white text-center focus:outline-none focus:border-blue-500"
-                      />
+                      <div>
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                          Weight (kg)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          placeholder="e.g. 80"
+                          value={item.weightKg}
+                          onChange={(e) => handleSetChange(idx, 'weightKg', e.target.value)}
+                          required
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white text-center focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
 
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="reps"
-                        value={item.reps}
-                        onChange={(e) => handleSetChange(idx, 'reps', e.target.value)}
-                        required
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white text-center focus:outline-none focus:border-blue-500"
-                      />
+                      <div>
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                          Reps
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="e.g. 8"
+                          value={item.reps}
+                          onChange={(e) => handleSetChange(idx, 'reps', e.target.value)}
+                          required
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white text-center focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
 
-                      <input
-                        type="number"
-                        step="0.5"
-                        min="1"
-                        max="10"
-                        placeholder="RPE"
-                        value={item.rpe}
-                        onChange={(e) => handleSetChange(idx, 'rpe', e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-amber-300 text-center focus:outline-none focus:border-amber-500"
-                      />
+                      <div>
+                        <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                          RPE 
+                        </label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          min="1"
+                          max="10"
+                          placeholder="1-10"
+                          value={item.rpe}
+                          onChange={(e) => handleSetChange(idx, 'rpe', e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-amber-300 text-center focus:outline-none focus:border-amber-500"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
