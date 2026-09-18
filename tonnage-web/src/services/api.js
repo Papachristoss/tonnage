@@ -68,4 +68,31 @@ export const workoutService = {
 };
 export const workoutApi = workoutService;
 
+// Profile Service
+export const profileService = {
+  get: async () => {
+    const res = await api.get('/profile');
+    return res.data;
+  },
+  update: async ({ username, age, weightKg }) => {
+    const res = await api.put('/profile', { username, age, weightKg });
+    return res.data;
+  },
+  updateAvatar: async (profilePicture) => {
+    const res = await api.put('/profile/avatar', { profilePicture });
+    return res.data;
+  },
+  removeAvatar: async () => {
+    const res = await api.put('/profile/avatar', { profilePicture: null });
+    return res.data;
+  },
+  changeEmail: async (newEmail, currentPassword) => {
+    const res = await api.put('/profile/email', { newEmail, currentPassword });
+    return res.data; // { token, email }
+  },
+  changePassword: async (currentPassword, newPassword) => {
+    await api.put('/profile/password', { currentPassword, newPassword });
+  },
+};
+
 export default api;

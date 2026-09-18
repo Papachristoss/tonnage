@@ -11,4 +11,5 @@ import java.util.List;
 public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, Long> {
     List<WorkoutSession> findAllByUserOrderByStartedAtDesc(User user);
     List<WorkoutSession> findAllByUser(User user);
+    long countByUser(User user);
 }
