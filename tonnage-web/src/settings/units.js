@@ -23,6 +23,8 @@ export function makeUnitHelpers(unit) {
     toKg,
     // e.g. format(1245) -> "1,245 kg" / "2,744.8 lb"
     format: (kg) => `${(fromKg(kg) ?? 0).toLocaleString()} ${isLb ? 'lb' : 'kg'}`,
+    // Whole numbers, for totals where decimals are noise: formatTotal(1223.5) -> "1,224 kg"
+    formatTotal: (kg) => `${Math.round(fromKg(kg) ?? 0).toLocaleString()} ${isLb ? 'lb' : 'kg'}`,
     // Sensible defaults and input step for the workout form
     defaultWorkWeight: isLb ? 175 : 80,
     inputStep: isLb ? 1 : 0.5,

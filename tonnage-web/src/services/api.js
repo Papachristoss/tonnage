@@ -94,6 +94,11 @@ export const profileService = {
   changePassword: async (currentPassword, newPassword) => {
     await api.put('/profile/password', { currentPassword, newPassword });
   },
+  // Both nullable: null clears that goal
+  updateGoals: async ({ weeklyWorkoutGoal, weeklyVolumeGoalKg }) => {
+    const res = await api.put('/profile/goals', { weeklyWorkoutGoal, weeklyVolumeGoalKg });
+    return res.data;
+  },
   deleteAccount: async (currentPassword) => {
     await api.delete('/profile', { data: { currentPassword } });
   },

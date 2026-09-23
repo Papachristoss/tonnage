@@ -16,7 +16,8 @@ import {
   Calendar,
   Dumbbell,
   LogOut,
-  Check
+  Check,
+  Target
 } from 'lucide-react';
 
 const MAX_AVATAR_DIMENSION = 300;
@@ -79,6 +80,13 @@ export default function ProfilePage() {
   const [username, setUsername] = useState('');
   const [age, setAge] = useState('');
   const [bodyweight, setBodyweight] = useState(''); // in the user's display unit (kg or lb)
+
+  // Weekly goals form
+  const [workoutGoal, setWorkoutGoal] = useState('');
+  const [volumeGoal, setVolumeGoal] = useState(''); // in the user's display unit
+  const [savingGoals, setSavingGoals] = useState(false);
+  const [goalsError, setGoalsError] = useState('');
+  const [goalsSuccess, setGoalsSuccess] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState('');
   const [infoSuccess, setInfoSuccess] = useState(false);
@@ -111,6 +119,8 @@ export default function ProfilePage() {
         setAge(data.age ?? '');
         setBodyweight(fromKg(data.weightKg) ?? '');
         setNewEmail(data.email || '');
+        setWorkoutGoal(data.weeklyWorkoutGoal ?? '');
+        setVolumeGoal(fromKg(data.weeklyVolumeGoalKg) ?? '');
       })
       .catch(() => setLoadError('Failed to load profile.'))
       .finally(() => setLoading(false));
@@ -122,6 +132,33 @@ export default function ProfilePage() {
     if (bodyweight === '') return null;
     if (String(bodyweight) === String(fromKg(profile.weightKg))) return profile.weightKg;
     return toKg(bodyweight);
+  };
+
+  // Volume goal in kg; same "unchanged -> keep stored value" rule as bodyweight
+  const volumeGoalKgForSave = () => {
+    if (volumeGoal === '') return null;
+    if (String(volumeGoal) === String(fromKg(profile.weeklyVolumeGoalKg))) return profile.weeklyVolumeGoalKg;
+    return toKg(volumeGoal);
+  };
+
+  const handleSaveGoals = async (e) => {
+    e.preventDefault();
+    setGoalsError('');
+    setGoalsSuccess(false);
+    setSavingGoals(true);
+    try {
+      const updated = await profileService.updateGoals({
+        weeklyWorkoutGoal: workoutGoal === '' ? null : parseInt(workoutGoal, 10),
+        weeklyVolumeGoalKg: volumeGoalKgForSave(),
+      });
+      setProfile(updated);
+      setGoalsSuccess(true);
+      setTimeout(() => setGoalsSuccess(false), 2500);
+    } catch (err) {
+      setGoalsError(typeof err.response?.data === 'string' ? err.response.data : 'Failed to save goals.');
+    } finally {
+      setSavingGoals(false);
+    }
   };
 
   const handleSaveInfo = async (e) => {
@@ -369,6 +406,65 @@ export default function ProfilePage() {
               </button>
             </form>
           </div>
+        </div>
+
+        {/* Weekly Goals Card */}
+        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 sm:p-6">
+          <h3 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-slate-400">
+            <Target className="w-4 h-4 text-blue-400" />
+            Weekly Goals
+          </h3>
+          <p className="text-xs text-slate-500 mt-1 mb-4">
+            Shown on your home page. Leave a field empty to skip that goal.
+          </p>
+          <form onSubmit={handleSaveGoals} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="goal-workouts" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                  Workouts per week
+                </label>
+                <input
+                  id="goal-workouts"
+                  type="number"
+                  min="1"
+                  max="14"
+                  step="1"
+                  value={workoutGoal}
+                  onChange={(e) => setWorkoutGoal(e.target.value)}
+                  placeholder="e.g. 4"
+                  disabled={profile.demo}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label htmlFor="goal-volume" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                  Weekly volume ({unitLabel})
+                </label>
+                <input
+                  id="goal-volume"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={volumeGoal}
+                  onChange={(e) => setVolumeGoal(e.target.value)}
+                  placeholder={unitLabel === 'lb' ? 'e.g. 17500' : 'e.g. 8000'}
+                  disabled={profile.demo}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            {goalsError && <p className="text-xs text-rose-400">{goalsError}</p>}
+
+            <button
+              type="submit"
+              disabled={savingGoals || profile.demo}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-on-accent text-xs font-bold rounded-xl transition"
+            >
+              {savingGoals ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : goalsSuccess ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+              {goalsSuccess ? 'Saved' : 'Save goals'}
+            </button>
+          </form>
         </div>
 
         {/* Stats Card */}

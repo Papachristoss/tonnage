@@ -52,7 +52,7 @@ export default function ExercisePage() {
       {category ? (
         <BackLink to={`/body-parts/${category.key}`}>{category.label}</BackLink>
       ) : (
-        <BackLink to="/">Body parts</BackLink>
+        <BackLink to="/">Home</BackLink>
       )}
 
       <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 sm:p-6">

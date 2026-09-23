@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router';
 import { RequireAuth, GuestOnly } from './components/RouteGuards';
 import AppLayout from './components/AppLayout';
 import AuthPage from './pages/AuthPage';
-import BodyPartsPage from './pages/BodyPartsPage';
+import HomePage from './pages/HomePage';
 import BodyPartPage from './pages/BodyPartPage';
 import ExercisePage from './pages/ExercisePage';
 import ProfilePage from './pages/ProfilePage';
@@ -23,7 +23,7 @@ function App() {
       {/* Signed-in only: guests are redirected to /login */}
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<BodyPartsPage />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/body-parts/:categoryKey" element={<BodyPartPage />} />
           <Route path="/exercises/:exerciseId" element={<ExercisePage />} />
           <Route path="/profile" element={<ProfilePage />} />

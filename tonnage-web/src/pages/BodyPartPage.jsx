@@ -18,7 +18,7 @@ export default function BodyPartPage() {
 
   return (
     <div>
-      <BackLink to="/">Body parts</BackLink>
+      <BackLink to="/">Home</BackLink>
       {exercisesError && <ErrorBanner>{exercisesError}</ErrorBanner>}
 
       <h2 className="text-lg font-bold text-white mb-4">{category.label}</h2>
