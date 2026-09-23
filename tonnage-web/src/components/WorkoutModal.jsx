@@ -1,28 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { workoutService } from '../services/api';
 import { X, Plus, Trash2, Dumbbell, Loader2, Save } from 'lucide-react';
+import { useUnits } from '../settings/SettingsContext';
 
-export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSaved, presetExerciseId }) {
-  const [title, setTitle] = useState('Push Day');
+// Rendered by AppLayout on top of the current page while the URL has ?logWorkout.
+// It's only mounted while open, so every open starts with a fresh form.
+export default function WorkoutModal({ exercises, presetExerciseId, onClose, onWorkoutSaved }) {
+  // Weights in the form are in the user's display unit; converted to kg on submit
+  const { label: unitLabel, toKg, defaultWorkWeight, inputStep } = useUnits();
   const [sets, setSets] = useState([
-    { exerciseId: exercises[0]?.id || 1, weightKg: 80, reps: 8, rpe: 8.0 }
+    { exerciseId: presetExerciseId || exercises[0]?.id || 1, weight: defaultWorkWeight, reps: 8, rpe: 8.0 }
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
 
-  // The modal stays mounted between opens, so reset its state fresh every
-  // time it's opened - this is what lets "Log this exercise" pre-fill the
-  // correct exercise instead of showing whatever was left over last time.
+  // Escape closes the modal
   useEffect(() => {
-    if (isOpen) {
-      setSets([
-        { exerciseId: presetExerciseId || exercises[0]?.id || 1, weightKg: 80, reps: 8, rpe: 8.0 }
-      ]);
-      setFormError(null);
-    }
-  }, [isOpen, presetExerciseId]);
-
-  if (!isOpen) return null;
+    const handleKeyDown = (e) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const handleAddSet = () => {
     const lastSet = sets[sets.length - 1];
@@ -30,7 +27,7 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
       ...sets,
       {
         exerciseId: lastSet ? lastSet.exerciseId : (exercises[0]?.id || 1),
-        weightKg: lastSet ? lastSet.weightKg : 60,
+        weight: lastSet ? lastSet.weight : defaultWorkWeight,
         reps: lastSet ? lastSet.reps : 8,
         rpe: 8.0
       }
@@ -43,9 +40,7 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
   };
 
   const handleSetChange = (index, field, value) => {
-    const updated = [...sets];
-    updated[index][field] = value;
-    setSets(updated);
+    setSets(sets.map((s, i) => (i === index ? { ...s, [field]: value } : s)));
   };
 
   const handleSubmit = async (e) => {
@@ -58,12 +53,12 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
     }
 
     // Format sets matching Spring Boot CreateWorkoutSessionRequest DTO
+    // (no title - the backend names the session)
     const payload = {
-      title,
       sets: sets.map((s, idx) => ({
         exerciseId: Number(s.exerciseId),
         setNumber: idx + 1,
-        weightKg: parseFloat(s.weightKg),
+        weightKg: toKg(s.weight),
         reps: parseInt(s.reps, 10),
         rpe: s.rpe ? parseFloat(s.rpe) : null
       }))
@@ -73,17 +68,20 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
       setSubmitting(true);
       await workoutService.create(payload);
       onWorkoutSaved();
-      onClose();
     } catch (err) {
       console.error('Error logging session:', err);
       setFormError('Failed to record session. Check terminal/API logs.');
-    } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="workout-modal-title"
+    >
       <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-800">
@@ -91,10 +89,11 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
             <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center">
               <Dumbbell className="w-4 h-4" />
             </div>
-            <h2 className="text-lg font-bold text-white">Log Workout Session</h2>
+            <h2 id="workout-modal-title" className="text-lg font-bold text-white">Log Workout Session</h2>
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
@@ -109,21 +108,6 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
                 {formError}
               </div>
             )}
-
-            {/* Session Title */}
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-                Session Routine Name
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                placeholder="e.g. Heavy Leg Day, Push Hypertrophy"
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500"
-              />
-            </div>
 
             {/* Dynamic Sets List */}
             <div>
@@ -185,15 +169,15 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
                     <div className="grid grid-cols-3 gap-2 pl-7">
                       <div>
                         <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                          Weight (kg)
+                          Weight ({unitLabel})
                         </label>
                         <input
                           type="number"
-                          step="0.5"
+                          step={inputStep}
                           min="0"
-                          placeholder="e.g. 80"
-                          value={item.weightKg}
-                          onChange={(e) => handleSetChange(idx, 'weightKg', e.target.value)}
+                          placeholder={`e.g. ${defaultWorkWeight}`}
+                          value={item.weight}
+                          onChange={(e) => handleSetChange(idx, 'weight', e.target.value)}
                           required
                           className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white text-center focus:outline-none focus:border-blue-500"
                         />
@@ -216,7 +200,7 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
 
                       <div>
                         <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                          RPE 
+                          RPE
                         </label>
                         <input
                           type="number"
@@ -248,7 +232,7 @@ export default function WorkoutModal({ isOpen, onClose, exercises, onWorkoutSave
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/20 transition disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-on-accent text-xs font-bold rounded-xl shadow-lg shadow-blue-600/20 transition disabled:opacity-50"
             >
               {submitting ? (
                 <>

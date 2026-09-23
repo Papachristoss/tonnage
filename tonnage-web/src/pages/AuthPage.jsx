@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router';
 import { authApi } from '../services/api';
+import { useAuth } from '../auth/AuthContext';
 import { Dumbbell, Loader2 } from 'lucide-react';
 
-export default function LandingPage({ onAuthSuccess }) {
-  const [isRegister, setIsRegister] = useState(false);
+// Routes: /login (mode="login") and /register (mode="register").
+// After signing in, GuestOnly redirects to the page the user was originally headed to.
+export default function AuthPage({ mode }) {
+  const isRegister = mode === 'register';
+  const { signIn } = useAuth();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -12,9 +18,7 @@ export default function LandingPage({ onAuthSuccess }) {
 
   const completeAuth = (response) => {
     const { token, email: userEmail } = response.data;
-    localStorage.setItem('tonnage_token', token);
-    localStorage.setItem('tonnage_user', userEmail);
-    onAuthSuccess({ email: userEmail });
+    signIn(token, userEmail);
   };
 
   const handleSubmit = async (e) => {
@@ -40,7 +44,7 @@ export default function LandingPage({ onAuthSuccess }) {
     try {
       const response = await authApi.login('demo@tonnage.app', 'demo1234');
       completeAuth(response);
-    } catch (err) {
+    } catch {
       setError('Demo login is temporarily unavailable. Please try registering instead.');
     } finally {
       setDemoLoading(false);
@@ -62,6 +66,13 @@ export default function LandingPage({ onAuthSuccess }) {
           <h2 className="text-lg font-semibold mb-5">
             {isRegister ? 'Create your account' : 'Sign in'}
           </h2>
+
+          {/* e.g. "Your account has been deleted" - passed in navigation state */}
+          {location.state?.notice && !error && (
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+              {location.state.notice}
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-sm">
@@ -95,7 +106,7 @@ export default function LandingPage({ onAuthSuccess }) {
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2"
+              className="mt-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-on-accent font-semibold py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {isRegister ? 'Register' : 'Sign In'}
@@ -104,13 +115,15 @@ export default function LandingPage({ onAuthSuccess }) {
 
           <div className="mt-4 text-center text-sm text-slate-400">
             {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button
-              type="button"
-              onClick={() => { setIsRegister(!isRegister); setError(''); }}
+            {/* Carry the "where were they headed" state across to the other form */}
+            <Link
+              to={isRegister ? '/login' : '/register'}
+              state={location.state}
+              replace
               className="text-blue-400 hover:text-blue-300 underline"
             >
               {isRegister ? 'Sign in' : 'Register here'}
-            </button>
+            </Link>
           </div>
 
           <div className="mt-5 pt-5 border-t border-slate-800">

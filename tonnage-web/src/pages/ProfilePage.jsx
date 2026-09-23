@@ -1,5 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { profileService } from '../services/api';
+import { useAuth } from '../auth/AuthContext';
+import { useSignOut } from '../auth/useSignOut';
+import { useUnits } from '../settings/SettingsContext';
 import {
   ChevronLeft,
   User as UserIcon,
@@ -50,7 +54,22 @@ function resizeImageToBase64(file) {
   });
 }
 
-export default function ProfilePage({ onBack, onLogout, onProfileUpdated, onEmailChanged }) {
+// Route: /profile
+export default function ProfilePage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn, updateHeaderProfile } = useAuth();
+  const signOutAndRedirect = useSignOut();
+  const { label: unitLabel, fromKg, toKg } = useUnits();
+
+  // Go back where the user came from; if they opened /profile directly, go home
+  const onBack = () => (location.key !== 'default' ? navigate(-1) : navigate('/'));
+  const onLogout = () => signOutAndRedirect();
+  // Keep the header's username/avatar in sync with edits made here
+  const onProfileUpdated = updateHeaderProfile;
+  // The JWT subject is the email, so an email change comes with a fresh token to store
+  const onEmailChanged = signIn;
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -59,7 +78,7 @@ export default function ProfilePage({ onBack, onLogout, onProfileUpdated, onEmai
   // Basic info form
   const [username, setUsername] = useState('');
   const [age, setAge] = useState('');
-  const [weightKg, setWeightKg] = useState('');
+  const [bodyweight, setBodyweight] = useState(''); // in the user's display unit (kg or lb)
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState('');
   const [infoSuccess, setInfoSuccess] = useState(false);
@@ -84,24 +103,25 @@ export default function ProfilePage({ onBack, onLogout, onProfileUpdated, onEmai
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    profileService
+      .get()
+      .then((data) => {
+        setProfile(data);
+        setUsername(data.username || '');
+        setAge(data.age ?? '');
+        setBodyweight(fromKg(data.weightKg) ?? '');
+        setNewEmail(data.email || '');
+      })
+      .catch(() => setLoadError('Failed to load profile.'))
+      .finally(() => setLoading(false));
+  }, [fromKg]);
 
-  const loadProfile = async () => {
-    try {
-      setLoading(true);
-      setLoadError(null);
-      const data = await profileService.get();
-      setProfile(data);
-      setUsername(data.username || '');
-      setAge(data.age ?? '');
-      setWeightKg(data.weightKg ?? '');
-      setNewEmail(data.email || '');
-    } catch (err) {
-      setLoadError('Failed to load profile.');
-    } finally {
-      setLoading(false);
-    }
+  // Bodyweight to send in kg. If the field wasn't edited, send the stored value as-is,
+  // so a kg -> lb -> kg round trip doesn't nudge it (82 kg -> 180.8 lb -> 82.01 kg).
+  const bodyweightKgForSave = () => {
+    if (bodyweight === '') return null;
+    if (String(bodyweight) === String(fromKg(profile.weightKg))) return profile.weightKg;
+    return toKg(bodyweight);
   };
 
   const handleSaveInfo = async (e) => {
@@ -113,7 +133,7 @@ export default function ProfilePage({ onBack, onLogout, onProfileUpdated, onEmai
       const updated = await profileService.update({
         username: username.trim() || null,
         age: age === '' ? null : parseInt(age, 10),
-        weightKg: weightKg === '' ? null : parseFloat(weightKg),
+        weightKg: bodyweightKgForSave(),
       });
       setProfile(updated);
       setInfoSuccess(true);
@@ -151,7 +171,7 @@ export default function ProfilePage({ onBack, onLogout, onProfileUpdated, onEmai
       const updated = await profileService.removeAvatar();
       setProfile(updated);
       onProfileUpdated({ username: updated.username, profilePicture: null });
-    } catch (err) {
+    } catch {
       setAvatarError('Failed to remove image.');
     } finally {
       setAvatarUploading(false);
@@ -322,15 +342,15 @@ export default function ProfilePage({ onBack, onLogout, onProfileUpdated, onEmai
                 </div>
                 <div>
                   <label className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                    Weight (kg)
+                    Weight ({unitLabel})
                   </label>
                   <input
                     type="number"
                     step="0.1"
                     min="0"
-                    value={weightKg}
-                    onChange={(e) => setWeightKg(e.target.value)}
-                    placeholder="e.g. 82"
+                    value={bodyweight}
+                    onChange={(e) => setBodyweight(e.target.value)}
+                    placeholder={unitLabel === 'lb' ? 'e.g. 180' : 'e.g. 82'}
                     disabled={profile.demo}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
@@ -342,7 +362,7 @@ export default function ProfilePage({ onBack, onLogout, onProfileUpdated, onEmai
               <button
                 type="submit"
                 disabled={savingInfo || profile.demo}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl transition"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-on-accent text-xs font-bold rounded-xl transition"
               >
                 {savingInfo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : infoSuccess ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
                 {infoSuccess ? 'Saved' : 'Save changes'}
@@ -373,7 +393,7 @@ export default function ProfilePage({ onBack, onLogout, onProfileUpdated, onEmai
                 Total Tonnage
               </div>
               <div className="text-xl font-black text-white">
-                {Math.round(profile.totalTonnageKg).toLocaleString()} <span className="text-sm font-normal text-slate-400">kg</span>
+                {Math.round(fromKg(profile.totalTonnageKg)).toLocaleString()} <span className="text-sm font-normal text-slate-400">{unitLabel}</span>
               </div>
             </div>
 

@@ -44,8 +44,9 @@ export const exerciseService = {
     const res = await api.get('/exercises');
     return res.data;
   },
-  getProgress: async (exerciseId) => {
-    const res = await api.get(`/exercises/${exerciseId}/progress`);
+  // unit ('kg' | 'lb') only changes the wording of progressionAdvice; numbers are always kg
+  getProgress: async (exerciseId, unit = 'kg') => {
+    const res = await api.get(`/exercises/${exerciseId}/progress`, { params: { unit } });
     return res.data;
   }
 };
@@ -92,6 +93,9 @@ export const profileService = {
   },
   changePassword: async (currentPassword, newPassword) => {
     await api.put('/profile/password', { currentPassword, newPassword });
+  },
+  deleteAccount: async (currentPassword) => {
+    await api.delete('/profile', { data: { currentPassword } });
   },
 };
 
