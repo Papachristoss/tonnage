@@ -58,6 +58,19 @@ public class ProfileController {
         }
     }
 
+    @DeleteMapping
+    public ResponseEntity<?> deleteAccount(
+            @AuthenticationPrincipal User currentUser,
+            @RequestBody DeleteAccountRequest request
+    ) {
+        try {
+            profileService.deleteAccount(currentUser, request);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PutMapping("/password")
     public ResponseEntity<?> changePassword(
             @AuthenticationPrincipal User currentUser,

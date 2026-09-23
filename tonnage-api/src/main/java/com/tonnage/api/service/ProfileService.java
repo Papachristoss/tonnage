@@ -8,6 +8,7 @@ import com.tonnage.api.repository.WorkoutSetRepository;
 import com.tonnage.api.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -159,5 +160,19 @@ public class ProfileService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    // Permanently removes the user and all their workout sessions (sets are removed with
+    // their session via cascade). Exercises are shared between users, so they stay.
+    @Transactional
+    public void deleteAccount(User user, DeleteAccountRequest request) {
+        rejectIfDemoAccount(user);
+
+        if (request.getCurrentPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect.");
+        }
+
+        workoutSessionRepository.deleteAll(workoutSessionRepository.findAllByUser(user));
+        userRepository.delete(user);
     }
 }

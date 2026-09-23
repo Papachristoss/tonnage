@@ -1,6 +1,9 @@
 # VS Code workspace settings (this workspace's launch.json holds real DB/JWT secrets)
 .vscode/
 
+# Claude Code local config (dev-server preview settings)
+.claude/
+
 # OS files
 .DS_Store
 Thumbs.db

@@ -10,6 +10,7 @@ import com.tonnage.api.repository.WorkoutSessionRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.List;
 public class DataInitializer {
 
     @Bean
+    @Order(1) // exercises must exist before the demo user's sessions reference them
     public CommandLineRunner initDefaultExercises(ExerciseRepository exerciseRepository) {
         return args -> {
             if (exerciseRepository.count() == 0) {
@@ -43,6 +45,7 @@ public class DataInitializer {
     }
 
     @Bean
+    @Order(2)
     public CommandLineRunner initDemoUser(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,

@@ -39,12 +39,13 @@ public class ExerciseController {
     @GetMapping("/{id}/progress")
     public ResponseEntity<ExerciseProgressDto> getExerciseProgress(
             @PathVariable Long id,
+            @RequestParam(defaultValue = "kg") String unit,
             @AuthenticationPrincipal User currentUser
     ) {
         Exercise exercise = exerciseRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Exercise not found with ID: " + id));
 
-        ExerciseProgressDto progress = analyticsService.getExerciseProgress(exercise.getId(), exercise.getName(), currentUser);
+        ExerciseProgressDto progress = analyticsService.getExerciseProgress(exercise.getId(), exercise.getName(), currentUser, unit);
         return ResponseEntity.ok(progress);
     }
 }

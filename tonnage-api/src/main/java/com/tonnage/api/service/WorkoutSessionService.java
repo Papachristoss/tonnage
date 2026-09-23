@@ -20,6 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WorkoutSessionService {
 
+    private static final String DEFAULT_TITLE = "Workout";
+
     private final WorkoutSessionRepository sessionRepository;
     private final ExerciseRepository exerciseRepository;
     private final AnalyticsService analyticsService;
@@ -27,7 +29,8 @@ public class WorkoutSessionService {
     @Transactional
     public WorkoutSessionDto createSession(CreateWorkoutSessionRequest request, User user) {
         WorkoutSession session = WorkoutSession.builder()
-                .title(request.getTitle())
+                // The title column is NOT NULL in the existing database, so fall back to a default
+                .title(request.getTitle() != null && !request.getTitle().isBlank() ? request.getTitle().trim() : DEFAULT_TITLE)
                 .startedAt(request.getStartedAt() != null ? request.getStartedAt() : LocalDateTime.now())
                 .completedAt(request.getCompletedAt() != null ? request.getCompletedAt() : LocalDateTime.now())
                 .user(user)

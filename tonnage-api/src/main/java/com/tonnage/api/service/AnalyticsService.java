@@ -74,7 +74,8 @@ public class AnalyticsService {
                 .build();
     }
 
-    public ExerciseProgressDto getExerciseProgress(Long exerciseId, String exerciseName, User user) {
+    // unit ("kg" or "lb") only affects the wording of progressionAdvice - all numeric fields stay in kg
+    public ExerciseProgressDto getExerciseProgress(Long exerciseId, String exerciseName, User user, String unit) {
         List<WorkoutSet> sets = workoutSetRepository.findByExerciseIdAndWorkoutSessionUserOrderByWorkoutSessionStartedAtAsc(exerciseId, user);
 
         if (sets.isEmpty()) {
@@ -107,7 +108,7 @@ public class AnalyticsService {
                 .toList();
 
         WorkoutSet lastSet = sets.get(sets.size() - 1);
-        String advice = generateOverloadAdvice(lastSet);
+        String advice = generateOverloadAdvice(lastSet, "lb".equalsIgnoreCase(unit));
 
         return ExerciseProgressDto.builder()
                 .exerciseId(exerciseId)
@@ -120,14 +121,28 @@ public class AnalyticsService {
                 .build();
     }
 
-    private String generateOverloadAdvice(WorkoutSet lastSet) {
+    private static final double KG_PER_LB = 0.45359237;
+
+    private String generateOverloadAdvice(WorkoutSet lastSet, boolean inPounds) {
+        // Advice is worded in the user's display unit; the standard jump is 2.5 kg or 5 lb
+        String unit = inPounds ? "lb" : "kg";
+        double lastWeight = inPounds ? lastSet.getWeightKg() / KG_PER_LB : lastSet.getWeightKg();
+        double increment = inPounds ? 5.0 : 2.5;
+
         if (lastSet.getRpe() != null && lastSet.getRpe() <= 7.0 && lastSet.getReps() >= 8) {
-            double targetWeight = round(lastSet.getWeightKg() + 2.5);
-            return "High readiness detected (RPE " + lastSet.getRpe() + "). Increase load by 2.5 kg to " + targetWeight + " kg next session.";
+            double targetWeight = lastWeight + increment;
+            return "High readiness detected (RPE " + formatNumber(lastSet.getRpe()) + "). Increase load by "
+                    + formatNumber(increment) + " " + unit + " to " + formatNumber(targetWeight) + " " + unit + " next session.";
         } else if (lastSet.getRpe() != null && lastSet.getRpe() >= 9.5) {
-            return "Near failure reached (RPE " + lastSet.getRpe() + "). Maintain " + lastSet.getWeightKg() + " kg and focus on rep completion before adding load.";
+            return "Near failure reached (RPE " + formatNumber(lastSet.getRpe()) + "). Maintain " + formatNumber(lastWeight) + " " + unit
+                    + " and focus on rep completion before adding load.";
         }
-        return "Steady progress. Target +1 rep at " + lastSet.getWeightKg() + " kg before incrementing weight.";
+        return "Steady progress. Target +1 rep at " + formatNumber(lastWeight) + " " + unit + " before incrementing weight.";
+    }
+
+    // 62.5 -> "62.5", 65.0 -> "65", 143.3009 -> "143.3"
+    private String formatNumber(double value) {
+        return BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
     }
 
     private double round(double value) {
