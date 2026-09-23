@@ -58,6 +58,18 @@ public class ProfileController {
         }
     }
 
+    @PutMapping("/goals")
+    public ResponseEntity<?> updateGoals(
+            @AuthenticationPrincipal User currentUser,
+            @RequestBody UpdateGoalsRequest request
+    ) {
+        try {
+            return ResponseEntity.ok(profileService.updateGoals(currentUser, request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @DeleteMapping
     public ResponseEntity<?> deleteAccount(
             @AuthenticationPrincipal User currentUser,

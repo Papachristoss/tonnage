@@ -11,6 +11,8 @@ public class UserProfileDto {
     private long totalWorkouts;
     private String mostTrainedMuscleGroup; // null if no workouts logged yet
     private Double bodyweightMultiple; // null if weightKg not set
+    private Integer weeklyWorkoutGoal; // null = no goal set
+    private Double weeklyVolumeGoalKg; // null = no goal set
     private boolean demo;
 
     public UserProfileDto() {}
@@ -44,6 +46,12 @@ public class UserProfileDto {
 
     public Double getBodyweightMultiple() { return bodyweightMultiple; }
     public void setBodyweightMultiple(Double bodyweightMultiple) { this.bodyweightMultiple = bodyweightMultiple; }
+
+    public Integer getWeeklyWorkoutGoal() { return weeklyWorkoutGoal; }
+    public void setWeeklyWorkoutGoal(Integer weeklyWorkoutGoal) { this.weeklyWorkoutGoal = weeklyWorkoutGoal; }
+
+    public Double getWeeklyVolumeGoalKg() { return weeklyVolumeGoalKg; }
+    public void setWeeklyVolumeGoalKg(Double weeklyVolumeGoalKg) { this.weeklyVolumeGoalKg = weeklyVolumeGoalKg; }
 
     public boolean isDemo() { return demo; }
     public void setDemo(boolean demo) { this.demo = demo; }

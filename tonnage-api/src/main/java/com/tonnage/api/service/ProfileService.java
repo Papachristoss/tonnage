@@ -55,6 +55,8 @@ public class ProfileService {
         dto.setProfilePicture(user.getProfilePicture());
         dto.setAge(user.getAge());
         dto.setWeightKg(user.getWeightKg());
+        dto.setWeeklyWorkoutGoal(user.getWeeklyWorkoutGoal());
+        dto.setWeeklyVolumeGoalKg(user.getWeeklyVolumeGoalKg());
         dto.setDemo(user.getEmail().equalsIgnoreCase(DEMO_EMAIL));
 
         long memberDays = ChronoUnit.DAYS.between(user.getCreatedAt().toLocalDate(), LocalDate.now());
@@ -160,6 +162,25 @@ public class ProfileService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    public UserProfileDto updateGoals(User user, UpdateGoalsRequest request) {
+        rejectIfDemoAccount(user);
+
+        Integer workoutGoal = request.getWeeklyWorkoutGoal();
+        if (workoutGoal != null && (workoutGoal < 1 || workoutGoal > 14)) {
+            throw new IllegalArgumentException("Workouts per week must be between 1 and 14.");
+        }
+
+        Double volumeGoal = request.getWeeklyVolumeGoalKg();
+        if (volumeGoal != null && (volumeGoal <= 0 || volumeGoal > 1_000_000)) {
+            throw new IllegalArgumentException("Weekly volume goal must be a positive number.");
+        }
+
+        user.setWeeklyWorkoutGoal(workoutGoal);
+        user.setWeeklyVolumeGoalKg(volumeGoal);
+        userRepository.save(user);
+        return getProfile(user);
     }
 
     // Permanently removes the user and all their workout sessions (sets are removed with

@@ -60,6 +60,9 @@ public class DataInitializer {
             }
 
             User demoUser = new User(demoEmail, passwordEncoder.encode("demo1234"));
+            // Goals so the home page shows goal progress for the demo (it can't edit its profile)
+            demoUser.setWeeklyWorkoutGoal(3);
+            demoUser.setWeeklyVolumeGoalKg(2000.0);
             userRepository.save(demoUser);
 
             Exercise bench = exerciseRepository.findByNameIgnoreCase("Barbell Bench Press").orElse(null);

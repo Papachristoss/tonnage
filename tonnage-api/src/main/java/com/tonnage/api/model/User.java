@@ -27,6 +27,11 @@ public class User {
 
     private Double weightKg;
 
+    // Weekly goals shown on the home page; null = no goal set
+    private Integer weeklyWorkoutGoal;
+
+    private Double weeklyVolumeGoalKg;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -88,6 +93,22 @@ public class User {
 
     public void setWeightKg(Double weightKg) {
         this.weightKg = weightKg;
+    }
+
+    public Integer getWeeklyWorkoutGoal() {
+        return weeklyWorkoutGoal;
+    }
+
+    public void setWeeklyWorkoutGoal(Integer weeklyWorkoutGoal) {
+        this.weeklyWorkoutGoal = weeklyWorkoutGoal;
+    }
+
+    public Double getWeeklyVolumeGoalKg() {
+        return weeklyVolumeGoalKg;
+    }
+
+    public void setWeeklyVolumeGoalKg(Double weeklyVolumeGoalKg) {
+        this.weeklyVolumeGoalKg = weeklyVolumeGoalKg;
     }
 
     public LocalDateTime getCreatedAt() {
