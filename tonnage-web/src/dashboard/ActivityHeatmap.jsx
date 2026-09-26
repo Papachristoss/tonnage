@@ -4,7 +4,11 @@ import { useUnits } from '../settings/SettingsContext';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-// Horizontal space between week columns (shared by the cells and the labels under them)
+// Phones show the newest 6 weeks (10 columns are too cramped for the date labels);
+// from the sm breakpoint up, all 10 (HEATMAP_WEEKS). The same column and gap classes
+// are shared by the cells and the labels under them so they stay aligned.
+const MOBILE_WEEKS = 6;
+const WEEK_COLUMNS = 'grid-cols-6 sm:grid-cols-10';
 const WEEK_GAP = 'gap-x-2.5 sm:gap-x-4';
 
 // Shade per activity level (0 = rest day). blue-500 is the same in both themes;
@@ -57,16 +61,15 @@ export default function ActivityHeatmap({ weeks, hasWorkoutGoal }) {
         {/* Cells: fill column by column (one column per week), newest week first */}
         <div
           role="img"
-          aria-label={`Training activity for the last ${weeks.length} weeks`}
-          className={`grid grid-flow-col grid-rows-7 gap-y-1 sm:gap-y-1.5 ${WEEK_GAP}`}
-          style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}
+          aria-label="Training activity for recent weeks"
+          className={`grid grid-flow-col grid-rows-7 gap-y-1 sm:gap-y-1.5 ${WEEK_COLUMNS} ${WEEK_GAP}`}
         >
-          {weeks.flatMap((week) =>
+          {weeks.flatMap((week, weekIndex) =>
             week.days.map((day) => (
               <div
                 key={+day.date}
                 title={describe(day)}
-                className={`h-5 sm:h-6 rounded ${
+                className={`h-5 sm:h-6 rounded ${weekIndex >= MOBILE_WEEKS ? 'hidden sm:block' : ''} ${
                   day.isFuture ? 'border border-dashed border-slate-700' : LEVEL_CLASSES[day.level]
                 } ${day.isToday ? 'ring-2 ring-blue-500 ring-offset-1 ring-offset-slate-900' : ''}`}
               />
@@ -77,12 +80,12 @@ export default function ActivityHeatmap({ weeks, hasWorkoutGoal }) {
         {/* Under each week: the Monday it started ("this week" for the current one),
             then a tick if the workout goal was hit */}
         <div />
-        <div
-          className={`grid mt-2 ${WEEK_GAP}`}
-          style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` }}
-        >
-          {weeks.map((week) => (
-            <div key={+week.weekStart} className="flex flex-col items-center gap-1">
+        <div className={`grid mt-2 ${WEEK_COLUMNS} ${WEEK_GAP}`}>
+          {weeks.map((week, weekIndex) => (
+            <div
+              key={+week.weekStart}
+              className={`flex-col items-center gap-1 ${weekIndex >= MOBILE_WEEKS ? 'hidden sm:flex' : 'flex'}`}
+            >
               <span
                 className={`text-[10px] sm:text-[11px] whitespace-nowrap ${
                   week.isCurrent ? 'text-slate-500' : 'text-slate-400'

@@ -11,7 +11,7 @@ export default function NotFoundPage() {
         to="/"
         className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-on-accent text-xs font-bold px-4 py-2 rounded-xl transition"
       >
-        Back to body parts
+        Back to home
       </Link>
     </div>
   );
